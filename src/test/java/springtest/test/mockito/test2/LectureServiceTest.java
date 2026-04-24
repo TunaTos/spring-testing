@@ -10,6 +10,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.swing.text.html.Option;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
@@ -65,5 +67,66 @@ class LectureServiceTest {
 
         Lecture createdLecture = lectureService.createLecture(member.getId(), lecture);
         assertEquals(member, createdLecture.getOwner());
+    }
+
+
+    @DisplayName("test3")
+    @ParameterizedTest
+    @CsvSource({
+            "title1, 1",
+            "title2, 2",
+            "title3, 3"
+    })
+    void test3(String title, int limitCount ) {
+        Member member = new Member(1L, "name", "abcd@naver.com");
+        Lecture lecture = new Lecture(title, limitCount);
+        when(memberService.findById(anyLong()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            lectureService.createLecture(member.getId(), lecture);
+        });
+    }
+
+    @DisplayName("findLecture() 없는 강의 조회")
+    @Test
+    void test4() {
+        when(lectureRepository.findById(anyLong()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> {
+            lectureService.findLecture(999L);
+        });
+
+    }
+
+    @DisplayName("test5 enrollMember() validate실패")
+    @Test
+    void test5() {
+        doThrow(new IllegalArgumentException()).when(memberService).validate(anyLong());
+        assertThrows(IllegalArgumentException.class, ()-> {
+            lectureService.enrollMember(1L, 999L);
+        });
+    }
+
+    @DisplayName("test6 complex test")
+    @ParameterizedTest
+    @CsvSource({
+            "스프링 스터디, 10, 홍길동, abc@naver.com",
+            "JPA 스터디, 5, 이영희, bbb@nate.net"
+    })
+    void test6(String title, int limitCount, String name, String email) {
+        Lecture lecture = new Lecture(title, limitCount);
+        Member member = new Member(1L, name, email);
+
+        when(memberService.findById(anyLong()))
+                .thenReturn(Optional.of(member));
+        when(lectureRepository.save(any())).thenReturn(lecture);
+
+        Lecture lecture1 = lectureService.createLecture(member.getId(), lecture);
+        assertAll(
+                () -> {assertEquals(lecture1.getOwner(), member);},
+                () -> {assertEquals(title, lecture1.getTitle());}
+        );
     }
 }
