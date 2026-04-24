@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
+@Entity(name = "MockitoTest1Member")
 @Getter
 @Setter
 @NoArgsConstructor
